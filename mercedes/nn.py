@@ -1,3 +1,4 @@
+import re
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -51,10 +52,10 @@ pca = PCA(n_components=10, svd_solver='full')
 y_train = train['y']
 y_mean = y_train.mean()
 p_train = pca.fit_transform(train_int_data)
-p_train = np.concatenate((p_train,train[d_t_str_keys]), axis=1)
+p_traini_all = np.concatenate((p_train,train[d_t_str_keys]), axis=1)
 
 p_test = pca.fit_transform(test_int_data)
-p_test = np.concatenate((p_test,test[d_t_str_keys]), axis=1)
+p_test_all = np.concatenate((p_test,test[d_t_str_keys]), axis=1)
 
 train_size = int(0.9*len(p_train))
 dtrain = p_train[:train_size]
@@ -62,11 +63,45 @@ label_train=y_train[:train_size]
 deval = p_train[train_size:]
 label_val=y_train[train_size:]
 
-print (p_train.shape)
-model = ma.fcnn(p_train.shape[1])
-history = model.fit(dtrain, label_train, validation_data=(deval, label_val), nb_epoch=100, batch_size=8, verbose=1)
+t_train = np.array(train.drop(['y'], axis=1))
+#t_train = np.concatenate((t_train,p_train), axis=1)
+print (t_train.shape, train.shape)
+t_test = np.array(test)
+#t_test = np.concatenate((t_test, p_test), axis=1)
 
-result = model.predict(deval)
+model = ma.fcnn(t_train.shape[1])
+checkpoint = ModelCheckpoint('weights/best.weights', monitor='val_loss', save_best_only=True, verbose=2)
+
+history = model.fit(t_train[:train_size], label_train, validation_data=(t_train[train_size:], label_val), nb_epoch=300, batch_size=8, verbose=1, callbacks=[checkpoint])
+
+model = ma.fcnn(t_train.shape[1])
+model.load_weights('weights/best.weights')
+result = model.predict(t_train[train_size:])
 
 r2_score = the_metric(result, label_val)
-print r2_score
+y_pred = model.predict(t_test)
+print r2_score, y_pred.shape, test.shape
+ID = test['ID']
+dic = {'ID':ID, 'y':y_pred.reshape((len(test)))}
+df = pd.DataFrame(dic, columns=["ID",'y'])
+df.to_csv('data/nn_submission.csv', index=False)
+
+#########################3 PLOT loss and accuracy ##############
+print(history.history.keys())
+
+# summarize history
+pars = history.history.keys()
+for par in pars:
+    if 'val_' in par:
+        act_par = re.findall('val_(.*)', par)[0]
+        plt.plot(history.history[act_par])
+        plt.plot(history.history[par])
+        plt.title('model '+act_par)
+        plt.ylabel(act_par)
+        plt.xlabel('epoch')
+        plt.legend(['train', 'validate'], loc='upper right')
+        # plt.show()
+        plt.savefig(str(act_par+'.png'))
+        plt.cla()
+        #plt.close()
+#########################3 PLOT loss and accuracy ##############

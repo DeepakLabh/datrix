@@ -81,7 +81,7 @@ test_int_data = test[d_int_keys]
 
 ########################################################################################3
 
-n_comp = 10
+n_comp = 12
 
 # tSVD
 tsvd = TruncatedSVD(n_components=n_comp, random_state=420)
@@ -169,7 +169,7 @@ y_pred = model.predict(dtest)
 
 stacked_pipeline = make_pipeline(
     StackingEstimator(estimator=LassoLarsCV(normalize=True)),
-    StackingEstimator(estimator=GradientBoostingRegressor(learning_rate=0.001, loss="huber", max_depth=3, max_features=0.55, min_samples_leaf=18, min_samples_split=14, subsample=0.7)),
+    StackingEstimator(estimator=GradientBoostingRegressor(learning_rate=0.001, loss="huber", max_depth=4, max_features=0.55, min_samples_leaf=18, min_samples_split=14, subsample=0.7)),
     LassoLarsCV()
 
 )
