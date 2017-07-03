@@ -19,6 +19,16 @@ def the_metric(y_pred, y):
 
 train = pd.read_csv('data/train.csv')
 test = pd.read_csv('data/test.csv')
+####################3 Remove the columns whis has only 0 #####################
+singularity_train = map(lambda x: {x: len(set(train[x]))},train.keys())
+keys_with_single_train = filter(lambda x: list(x.values())[0]==1, list(singularity_train))
+keys_with_single_train = map(lambda x: x.keys()[0], keys_with_single_train)
+for i in keys_with_single_train:
+    del train[i]
+    del test[i]
+#del train['X4'], train['X5'], test['X4'], test['X5']
+####################3 Remove the columns whis has only 0 #####################
+
 d_t = map(lambda x: {x:type(train[x][0])}, train)
 d_t_str = filter(lambda x: x.values()[0]==str, d_t)
 
@@ -57,7 +67,7 @@ p_traini_all = np.concatenate((p_train,train[d_t_str_keys]), axis=1)
 p_test = pca.fit_transform(test_int_data)
 p_test_all = np.concatenate((p_test,test[d_t_str_keys]), axis=1)
 
-train_size = int(0.9*len(p_train))
+train_size = int(0.90*len(p_train))
 dtrain = p_train[:train_size]
 label_train=y_train[:train_size]
 deval = p_train[train_size:]
@@ -72,7 +82,7 @@ t_test = np.array(test)
 model = ma.fcnn(t_train.shape[1])
 checkpoint = ModelCheckpoint('weights/best.weights', monitor='val_loss', save_best_only=True, verbose=2)
 
-history = model.fit(t_train[:train_size], label_train, validation_data=(t_train[train_size:], label_val), nb_epoch=300, batch_size=8, verbose=1, callbacks=[checkpoint])
+history = model.fit(t_train[:train_size], label_train, validation_data=(t_train[train_size:], label_val), nb_epoch=1000, batch_size=8, verbose=1, callbacks=[checkpoint])
 
 model = ma.fcnn(t_train.shape[1])
 model.load_weights('weights/best.weights')
