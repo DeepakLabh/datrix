@@ -13,11 +13,14 @@ from keras.callbacks import ModelCheckpoint
 import model_arch as ma
 import pickle as pk
 import gzip
+import keras
 
 # evaluation metric
 def the_metric(y_pred, y):
     y_true = y
     return 'my_r2', r2_score(y_true, y_pred)
+
+
 try:
     t_train,t_test,label_train,label_val = pk.load(gzip.open('data/train_test_data.zip', 'rb'))
     print 'Compressed Pickle loading done'
@@ -40,6 +43,7 @@ except:
     d_t_str_keys = map(lambda x: x.keys()[0], d_t_str)
     d_int_keys = list(test.keys())
     d_int_keys = list(set(d_int_keys).difference(set(d_t_str_keys)))
+    d_int_keys.remove('ID')
     
     data_str_test = test[d_t_str_keys]
     data_str_train = train[d_t_str_keys]
@@ -55,6 +59,7 @@ except:
     train= train.iloc[np.random.permutation(len(train))]
     train_int_data = train[d_int_keys]
     test_int_data = test[d_int_keys]
+    print 11111111111111, 'ID' in d_int_keys, 22222222
     
     for i in d_t_str_keys:
         test[i] = lbl.transform(test[i]) 
@@ -90,7 +95,9 @@ except:
         print e, 'pickling error'
         pass
 model = ma.fcnn(t_train.shape[1])
-checkpoint = ModelCheckpoint('weights/best.weights', monitor='val_loss', save_best_only=True, verbose=2)
+
+t_board = keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=0, write_graph=True, write_images=False)
+checkpoint = ModelCheckpoint('weights/best.weights', monitor='val_r2_keras', mode='max', save_best_only=True, verbose=2)
 
 train_size = int(0.90*len(t_train))
 history = model.fit(t_train[:train_size], label_train, validation_data=(t_train[train_size:], label_val), nb_epoch=400, batch_size=8, verbose=1, callbacks=[checkpoint])
@@ -103,6 +110,7 @@ r2_score = the_metric(result, label_val)
 y_pred_best = model_best.predict(t_test)
 y_pred = model.predict(t_test)
 
+test = pd.read_csv('data/test.csv')
 print r2_score, y_pred_best.shape, test.shape
 ID = test['ID']
 dic = {'ID':ID, 'y':y_pred_best.reshape((len(test)))}
