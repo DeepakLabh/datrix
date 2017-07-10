@@ -23,7 +23,9 @@ def fcnn(input_dim, input_str_dim):
     input_layers.append(input_layer2)
 
     d1 = Dense(200)(input_layer1)
-    d1 = Dropout(0.1)(d1)
+    #d1 = Dropout(0.1)(d1)
+    d1 = Reshape((200,1))(d1)
+    d1 = LSTM(30, return_sequences=False, go_backwards = False, activation='tanh', inner_activation='hard_sigmoid')(d1)
     d1 = BatchNormalization()(d1)
     d2 = Activation('relu')(d1)
 

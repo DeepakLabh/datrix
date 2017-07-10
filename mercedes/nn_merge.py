@@ -11,7 +11,7 @@ from copy import deepcopy
 from sklearn.metrics import r2_score
 from keras.callbacks import ModelCheckpoint
 from keras.models import load_model
-import model_arch as ma
+import model_arch_merge as ma
 import pickle as pk
 import gzip
 import keras
